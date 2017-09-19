@@ -9,6 +9,7 @@
 #include <list>
 
 #include "../header/structures.h"
+#include "../header/io.h" 
 
 
 typedef struct{
@@ -16,6 +17,12 @@ typedef struct{
 	std::vector<std::list<Operation>::iterator> equIndex;
 	std::vector<std::pair<std::string,std::list<Operation>::iterator>> ifIndex;
 } EquIf;
+
+typedef struct{
+	std::map<std::string,std::pair<std::list<Operation>::iterator,std::list<Operation>::iterator>> mnt;
+	std::pair<std::string,std::list<Operation>::iterator> currMacro;
+
+} Macro;
 
 namespace pp{
 
@@ -25,10 +32,10 @@ namespace pp{
 	 *
 	 *	@param Operation operação que vai ser analisada
 	 * */
-	void control_tables(Operation op, std::list<Operation>::iterator it, EquIf &equIf);
+	void control_tables(Operation op, std::list<Operation>::iterator it, EquIf &equIf,Macro &macro);
 
 
-	void read_code(std::string strCode,std::list<Operation> &code,EquIf &equIf);
+	void read_code(std::string strCode,std::list<Operation> &code,EquIf &equIf,Macro &macro);
 	void manager(char* argv[], std::list<Operation> &code);
 	void file2str(char *file, std::string &str);
 	MNEMONIC inst2cod(std::string str);

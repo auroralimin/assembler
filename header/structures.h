@@ -34,6 +34,7 @@ typedef enum{
 
 
 
+
 typedef struct{
 	int line;
 	std::string complete;
@@ -48,15 +49,6 @@ typedef struct{
 
 } Operation;
 
-namespace tables{
-	//map com os equ <Lable,valor>
-	//map com os if <Lable,pos no vetor code>
-
-	//pair de com inicio e fim de cada sessao,
-	//fim como 0 quer dizer que é no final do arquivo
-//	std::pair<int,int> text_section;
-	//std::pair<int,int> data_section;
-};
 
 
 

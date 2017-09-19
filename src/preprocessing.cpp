@@ -1,20 +1,29 @@
 #include "../header/preprocessing.h"
 
-
-void pp::control_tables(Operation op, std::list<Operation>::iterator it, EquIf &equIf){
+void pp::control_tables(Operation op, std::list<Operation>::iterator it, EquIf &equIf, Macro &macro){
 
 	switch(op.instCod){
-		case MNEMONIC::EQU :
+		case MNEMONIC::EQU:
 			if(equIf.equTable.count(op.lable)){
-				std::cout << "ERRO semântico: declaração de rótulos repetidos" << std::endl;
-				std::cout << "Linha: " << op.line << "\tRótulo: " << op.lable << std::endl;
-				std::cout << "Operação:\t" << op.complete << std::endl;			
+				io::outError(std::cout,"semântico","declaração de rótulos repetidos",
+										op.line,op.complete,"Rótulo "+op.lable+" já declarado anteriormente");	
 			}
-			equIf.equTable.insert(std::pair<std::string,bool>(op.lable,std::stoi(op.first_op)));
+			equIf.equTable.insert(std::make_pair(op.lable,std::stoi(op.first_op)));
 			equIf.equIndex.push_back(it);
 			break;
-		case MNEMONIC::IF :
-			equIf.ifIndex.push_back(std::pair<std::string,std::list<Operation>::iterator>(op.first_op,it));
+
+		case MNEMONIC::IF:
+			equIf.ifIndex.push_back(std::make_pair(op.first_op,it));
+			break;
+
+		//TODO verificar erros na macro
+		case MNEMONIC::MACRO:
+			macro.currMacro = std::make_pair(op.lable,it);
+			break;
+
+		case MNEMONIC::END:
+			macro.mnt.insert(std::make_pair(macro.currMacro.first,std::make_pair(macro.currMacro.second,it)));
+			break;
 	
 	}
 
@@ -26,7 +35,8 @@ void pp::manager(char* argv[], std::list<Operation> &code){
 	pp::file2str(argv[2],strCode);	
 	
 	EquIf equIf; 
-	pp::read_code(strCode,code,equIf);
+	Macro macro;
+	pp::read_code(strCode,code,equIf,macro);
 
 	pp::equIfResolve(code,equIf);
 	
@@ -47,7 +57,7 @@ void pp::file2str(char *file, std::string &str){
 
 }
 
-void pp::read_code(std::string strCode,std::list<Operation> &code,EquIf &equIf){
+void pp::read_code(std::string strCode,std::list<Operation> &code,EquIf &equIf,Macro &macro){
 
 	
 	const std::regex regex("^[ \\t]*(?:([a-zA-Z_]\\w*):\\s*)?(?:([a-zA-Z]+)\\s*)"
@@ -97,7 +107,7 @@ void pp::read_code(std::string strCode,std::list<Operation> &code,EquIf &equIf){
 			code.push_back(op);
 	
 			//--code.end -> iterator do ultimo elemento inserido
-			pp::control_tables(op,--code.end(),equIf);
+			pp::control_tables(op,--code.end(),equIf,macro);
 
 			std::string str(sm[0]);
 			line += std::count(str.begin(), str.end(), '\n') - 1;
@@ -142,9 +152,8 @@ void pp::equIfResolve(std::list<Operation> &code,EquIf &equIf){
 	for(std::pair<std::string,std::list<Operation>::iterator> ifI : equIf.ifIndex){
 		
 		if(!equIf.equTable.count(ifI.first)){
-			std::cout << "ERRO semântico: declaração de rótulos ausentes" << std::endl;
-			std::cout << "Linha: " << ifI.second->line  << "\tRótulo: " << ifI.second->lable << std::endl;
-			std::cout << "Operação:\t" << ifI.second->complete << std::endl;
+			io::outError(std::cout,"semântico","declaração de rótulos ausentes",ifI.second->line,
+										ifI.second->complete,"Rótulo "+ifI.second->first_op+" nunca foi declarado.");
 
 		}else if(!equIf.equTable[ifI.first]){
 			ifI.second = --code.erase(++ifI.second);
