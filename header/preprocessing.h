@@ -19,6 +19,7 @@ typedef struct{
 } EquIf;
 
 typedef struct{
+	//<Nome Macro,it inicio, it fim>
 	std::map<std::string,std::pair<std::list<Operation>::iterator,std::list<Operation>::iterator>> mnt;
 	std::pair<std::string,std::list<Operation>::iterator> currMacro;
 
@@ -41,6 +42,8 @@ namespace pp{
 	MNEMONIC inst2cod(std::string str);
 
 	void equIfResolve(std::list<Operation> &code,EquIf &equIf);
+
+	void expandMacro(std::list<Operation> &code,Macro &macro);
 
 
 }

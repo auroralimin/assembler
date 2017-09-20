@@ -39,6 +39,7 @@ void pp::manager(char* argv[], std::list<Operation> &code){
 	pp::read_code(strCode,code,equIf,macro);
 
 	pp::equIfResolve(code,equIf);
+	pp::expandMacro(code,macro);
 	
 }
 
@@ -60,10 +61,26 @@ void pp::file2str(char *file, std::string &str){
 void pp::read_code(std::string strCode,std::list<Operation> &code,EquIf &equIf,Macro &macro){
 
 	
-	const std::regex regex("^[ \\t]*(?:([a-zA-Z_]\\w*):\\s*)?(?:([a-zA-Z]+)\\s*)"
+/* *
+ * Se ficar desse jeto como que sei se no caso da intrução que recebe 0 parametros
+ * se tiver duas intrução de 0 parametros seguidas não da para saber se a segunda 
+ * é uma instrução ou o primeiro parametro da primeira, pensar no caso de matro
+ * 
+ * TORCA
+ * STOP
+ *
+ * TROCA STOP ?
+ * entao depois da instrução nao pode vir o \n antes do operado
+ * **Conversar com o bruno sobre isso
+ * */
+//	const std::regex regex("^[ \\t]*(?:([a-zA-Z_]\\w*):\\s*)?(?:([a-zA-Z]\\w*)\\s*)"
+//												 "(?:(-?\\w+)(?:\\s*\\+\\s*(\\d))?)?(?:, (\\w+)(?:\\s*"
+//												 "\\+\\s*(\\d))?[\\t ]*(?:;.*)?\\n|[\\t ]*(?:;.*)?\\n)");
+
+	const std::regex regex("^[ \\t]*(?:([a-zA-Z_]\\w*):\\s*)?(?:([a-zA-Z]\\w*)[ \\t]*)"
 												 "(?:(-?\\w+)(?:\\s*\\+\\s*(\\d))?)?(?:, (\\w+)(?:\\s*"
 												 "\\+\\s*(\\d))?[\\t ]*(?:;.*)?\\n|[\\t ]*(?:;.*)?\\n)");
-
+	
 	const std::regex rerror(".*\\n");
 	const std::regex rline("^[ \\t]*(?:;.*)?\\s");
 	std::smatch sm;
@@ -166,6 +183,27 @@ void pp::equIfResolve(std::list<Operation> &code,EquIf &equIf){
 		code.erase(equI);
 	}
 
-	
+}
+
+
+void pp::expandMacro(std::list<Operation> &code, Macro &macro){
+
+	std::list<Operation>::iterator it;	
+	for(it = code.begin(); it != code.end(); it++ ){
+		if(macro.mnt.count(it->instruction)){
+			code.insert(it,++macro.mnt[it->instruction].first,macro.mnt[it->instruction].second);	
+			macro.mnt[it->instruction].first--;
+			it = code.erase(it);
+			it--;
+		}
+	}
+
+	for(auto m : macro.mnt){
+		code.erase(m.second.first,++m.second.second);
+	}
+
 
 }
+
+
+
