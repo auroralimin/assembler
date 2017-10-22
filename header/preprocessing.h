@@ -1,3 +1,6 @@
+#ifndef PREPROCESSING_H
+#define PREPROCESSING_H
+
 #include <map>
 #include <iostream>
 #include <algorithm>
@@ -13,9 +16,9 @@
 
 
 typedef struct{
-	std::map<std::string,bool> equTable;
+	std::map<std::string,int> equTable;
 	std::vector<std::list<Operation>::iterator> equIndex;
-	std::vector<std::pair<std::string,std::list<Operation>::iterator>> ifIndex;
+	std::vector<std::list<Operation>::iterator> ifIndex;
 } EquIf;
 
 typedef struct{
@@ -45,6 +48,8 @@ namespace pp{
 
 	void expandMacro(std::list<Operation> &code,Macro &macro);
 
+	std::string equConverter(std::string str, const EquIf equIf);
 
 }
 
+#endif

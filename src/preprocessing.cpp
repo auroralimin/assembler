@@ -5,15 +5,20 @@ void pp::control_tables(Operation op, std::list<Operation>::iterator it, EquIf &
 	switch(op.instCod){
 		case MNEMONIC::EQU:
 			if(equIf.equTable.count(op.lable)){
-				io::outError(std::cout,"semântico","declaração de rótulos repetidos",
-										op.line,op.complete,"Rótulo "+op.lable+" já declarado anteriormente");	
+				io::outError(std::cerr,"semântico","declaração de rótulos repetidos",
+										op.line,op.complete,"rótulo "+op.lable+" já declarado anteriormente");	
 			}
-			equIf.equTable.insert(std::make_pair(op.lable,std::stoi(op.first_op)));
+			try{
+				equIf.equTable.insert(std::make_pair(op.lable,std::stoi(op.first_op,nullptr,0)));
+			}catch(std::invalid_argument){
+				io::outError(std::cerr,"semântico","tipo de argumento invalido",
+										op.line,op.complete,"Note que a diretiva EQU espera um numero como argumento");	
+			}
 			equIf.equIndex.push_back(it);
 			break;
 
 		case MNEMONIC::IF:
-			equIf.ifIndex.push_back(std::make_pair(op.first_op,it));
+			equIf.ifIndex.push_back(it);
 			break;
 
 		//TODO verificar erros na macro
@@ -37,7 +42,7 @@ void pp::manager(char* argv[], std::list<Operation> &code){
 	EquIf equIf; 
 	Macro macro;
 	pp::read_code(strCode,code,equIf,macro);
-
+	
 	pp::equIfResolve(code,equIf);
 	pp::expandMacro(code,macro);
 	
@@ -55,31 +60,13 @@ void pp::file2str(char *file, std::string &str){
 			            std::istreambuf_iterator<char>());
 
 	std::transform(str.begin(), str.end(),str.begin(), ::toupper);
-
 }
 
 void pp::read_code(std::string strCode,std::list<Operation> &code,EquIf &equIf,Macro &macro){
 
-	
-/* *
- * Se ficar desse jeto como que sei se no caso da intrução que recebe 0 parametros
- * se tiver duas intrução de 0 parametros seguidas não da para saber se a segunda 
- * é uma instrução ou o primeiro parametro da primeira, pensar no caso de matro
- * 
- * TORCA
- * STOP
- *
- * TROCA STOP ?
- * entao depois da instrução nao pode vir o \n antes do operado
- * **Conversar com o bruno sobre isso
- * */
-//	const std::regex regex("^[ \\t]*(?:([a-zA-Z_]\\w*):\\s*)?(?:([a-zA-Z]\\w*)\\s*)"
-//												 "(?:(-?\\w+)(?:\\s*\\+\\s*(\\d))?)?(?:, (\\w+)(?:\\s*"
-//												 "\\+\\s*(\\d))?[\\t ]*(?:;.*)?\\n|[\\t ]*(?:;.*)?\\n)");
-
 	const std::regex regex("^[ \\t]*(?:([a-zA-Z_]\\w*):\\s*)?(?:([a-zA-Z]\\w*)[ \\t]*)"
-												 "(?:(-?\\w+)(?:\\s*\\+\\s*(\\d))?)?(?:, (\\w+)(?:\\s*"
-												 "\\+\\s*(\\d))?[\\t ]*(?:;.*)?\\n|[\\t ]*(?:;.*)?\\n)");
+												 "(?:(-?\\w+)(?:\\s*\\+\\s*([a-zA-Z]\\w*|\\d|0[xX][a-fA-F]+))?)?(?:, (\\w+)(?:\\s*"
+												 "\\+\\s*([a-zA-z]\\w*|\\d|0[xX][a-fA-F]+))?[\\t ]*(?:;.*)?(?:\\n)|[\\t ]*(?:;.*)?(?:\\n))");
 	
 	const std::regex rerror(".*\\n");
 	const std::regex rline("^[ \\t]*(?:;.*)?\\s");
@@ -101,24 +88,26 @@ void pp::read_code(std::string strCode,std::list<Operation> &code,EquIf &equIf,M
 				//caso nao seja é uma linha que esta errada, ou seja uma linha que
 				//não foi possivel tokear 
 				regex_search(searchStart, strCode.cend(), sm, rerror);
+				//TODO separar tipos de erros lexico, ex duas lables na mesma linha
+				//io::outError(std::cerr,"léxico","tokens inválidos",line,sm[0]);
 				Operation op;
 				op.line = line;
 				op.complete = sm[0];
 				op.error = true;
-				
+
 				code.push_back(op);
 			}	
 		}else{
 			Operation op;
 			op.line = line;
 			op.complete = sm[0];
-			op.lable = sm[1];
+			op.lable = pp::equConverter(sm[1],equIf);
 			op.instruction = sm[2];
 			op.instCod = pp::inst2cod(sm[2].str());
-			op.first_op = sm[3];
-			op.first_mod = sm[4].str().empty() ? 0 : stoi(sm[4]);
-			op.second_op = sm[5];
-			op.second_mod = sm[6].str().empty() ? 0 : stoi(sm[6]);
+			op.first_op = pp::equConverter(sm[3],equIf); 
+			op.first_mod = pp::equConverter(sm[4],equIf); 
+			op.second_op = pp::equConverter(sm[5],equIf); 
+			op.second_mod = pp::equConverter(sm[6],equIf); 
 			op.error = false;
 			
 			code.push_back(op);
@@ -166,16 +155,17 @@ MNEMONIC pp::inst2cod(std::string str){
 
 
 void pp::equIfResolve(std::list<Operation> &code,EquIf &equIf){
-	for(std::pair<std::string,std::list<Operation>::iterator> ifI : equIf.ifIndex){
+	for(std::list<Operation>::iterator it : equIf.ifIndex){
 		
-		if(!equIf.equTable.count(ifI.first)){
-			io::outError(std::cout,"semântico","declaração de rótulos ausentes",ifI.second->line,
-										ifI.second->complete,"Rótulo "+ifI.second->first_op+" nunca foi declarado.");
-
-		}else if(!equIf.equTable[ifI.first]){
-			ifI.second = --code.erase(++ifI.second);
+		try{
+			if(!std::stoi(it->first_op,nullptr,0))
+				it = --code.erase(++it);
+		}catch(std::invalid_argument){
+			io::outError(std::cerr,"semântico","tipo de argumento invalido",
+			                      it->line,it->complete,"Note: O argumento da diretiva IF tem que ser anteriomente declarado como um rotulo de EQU "+
+																									it->first_op + " não é nem um numero nem foi não foi declarado anteriomente");		
 		}
-		code.erase(ifI.second);
+		code.erase(it);
 	}
 	
 	
@@ -202,6 +192,18 @@ void pp::expandMacro(std::list<Operation> &code, Macro &macro){
 		code.erase(m.second.first,++m.second.second);
 	}
 
+
+}
+
+
+
+std::string pp::equConverter(std::string str,const EquIf equIf){
+
+	auto it = equIf.equTable.find(str); 
+	if(it != equIf.equTable.end())
+		return std::to_string(it->second);
+	else
+		return str;
 
 }
 

@@ -1,3 +1,5 @@
+#ifndef STRUCTURES_H
+#define STRUCTURES_H
 #include <stdlib.h>
 #include <string>
 #include <map>
@@ -42,14 +44,14 @@ typedef struct{
 	std::string instruction;
 	MNEMONIC instCod;
 	std::string first_op;
-	int first_mod;
+	std::string first_mod;
 	std::string second_op;
-	int second_mod;
-	bool error;
+	std::string second_mod;
 
+	bool error;
 } Operation;
 
 
-
+#endif
 
 
