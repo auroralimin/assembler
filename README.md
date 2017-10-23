@@ -1,7 +1,7 @@
 # Assembler
 
 Trabalho feito para diciplina de Software Basico CIC UnB 2/2017
-Professor Bruno Machiavelo
+Professor Bruno Macchiavello
 
 Aluno: Eduardo Scartezini Correia Carvalho - 14/0137084
 
