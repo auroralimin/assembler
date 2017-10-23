@@ -6,7 +6,11 @@
 #include <iostream>
 #include <regex>
 
-
+/**
+ * Namespace com funções 
+ * que geram o output do 
+ * software
+ **/
 namespace io{
 
 	template <typename Container> 

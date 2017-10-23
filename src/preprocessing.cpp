@@ -34,19 +34,6 @@ void pp::control_tables(Operation op, std::list<Operation>::iterator it, EquIf &
 
 }
 
-void pp::manager(char* argv[], std::list<Operation> &code){
-	
-	std::string strCode;
-	pp::file2str(argv[2],strCode);	
-	
-	EquIf equIf; 
-	Macro macro;
-	pp::read_code(strCode,code,equIf,macro);
-	
-	pp::equIfResolve(code,equIf);
-	pp::expandMacro(code,macro);
-	
-}
 
 
 void pp::file2str(char *file, std::string &str){

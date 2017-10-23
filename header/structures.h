@@ -5,7 +5,7 @@
 #include <map>
 
 
-
+/* Enum com instruçoes e diretivas validas na linguagem */
 typedef enum{
 	ADD,
 	SUB,
@@ -36,7 +36,7 @@ typedef enum{
 
 
 
-
+/* Struct que armazena uma operação  */
 typedef struct{
 	int line;
 	std::string complete;

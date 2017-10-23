@@ -97,8 +97,8 @@ void _asm::manager(std::list<Operation> &code,std::vector<int> &obj){
 					case JMPZ:
 					case JMPP:
 					case JMPN:
-						io::outError(std::cerr,"semântico","pulo para rótulos inválidos",i
-												op->line,op->completei,
+						io::outError(std::cerr,"semântico","pulo para rótulos inválidos",
+												op->line,op->complete,
 												"Note: Pulo para um rótulo não declarado");
 				}
 			}
